@@ -114,6 +114,35 @@ Same agents handle all three — only `problem.yaml` changes.
 /flywheel-run problems/my-new-thing
 ```
 
+## Bring flywheel to your own repo
+
+Single-problem repos use the flywheel where they are — no submodules, no pointing opencode elsewhere. Clone this repo anywhere (its location doesn't matter afterwards), then scaffold **copies** of the harness into your repo:
+
+```bash
+git clone https://github.com/KaiRawal/auto-flywheel.git   # anywhere; forgettable
+./auto-flywheel/scripts/flywheel-init /path/to/myrepo my-feature
+cd /path/to/myrepo && opencode   # restart once so agents/commands register
+```
+
+What you get in your repo (all paths below are relative to it):
+
+```
+.opencode/agent/flywheel-*.md, planner, researcher, sandbox-*, problem-architect
+.opencode/command/flywheel-*.md   # /flywheel-run, /flywheel-new, /flywheel-status, ...
+.opencode/skills/flywheel/        # skill definition
+.flywheel/problem.yaml            # your spec (starter template, TODOs inside)
+.flywheel/shared/                 # observe.py logger + gate/observability contracts
+```
+
+`flywheel-init` is copy-only and idempotent: re-running it refreshes the harness files, merges `.gitignore` (`.flywheel/runs/`, `.venv/`) and an `AGENTS.md` section without touching anything else, and refuses to overwrite files whose content differs. Updating is just `git pull` here + re-run there. Then, inside opencode in your repo:
+
+```
+/flywheel-new    # fills .flywheel/problem.yaml: scope, test command, gates
+/flywheel-run .flywheel
+```
+
+Runs land in `.flywheel/runs/<ts>/` (gitignored); the winner is delivered on a `flywheel/<problem>-<ts>` branch in your repo for review. Everything under "Writing gates", "Problem types" and "Observability" below applies with `problems/<name>` → `.flywheel` and `shared/` → `.flywheel/shared/`.
+
 ## Observability: what was done and why
 
 Every run dual-writes its audit trail to `runs/<problem>/<ts>/`:

@@ -1,0 +1,45 @@
+# Scaffold template for bringing the flywheel to an existing repo.
+#
+# `scripts/flywheel-init` copies this to `.flywheel/problem.yaml` with the
+# problem name filled in. Fill the TODOs via `/flywheel-new`,
+# or edit by hand. Single-problem layout: this file, `.flywheel/runs/`
+# (gitignored scratch) and `.flywheel/shared/` (logger + contracts).
+problem: __PROBLEM_NAME__
+type: feature  # feature | ml-system | prediction
+goal: "TODO: one-sentence goal for this problem"
+
+target:
+  scope: ["."]  # TODO: narrow to dirs the harness may edit, e.g. ["src/", "tests/"]
+  delivery: branch  # branch | patch — winner lands on flywheel/<problem>-<ts>
+
+datasets: []  # TODO for ml/prediction: list data sources; feature work can leave this empty
+
+blackbox:
+  train: "true"  # TODO: command producing the change (`true` if the agent's edits ARE the change, else a build step)
+  predict: "TODO: command printing gate metrics, e.g. .venv/bin/python -m pytest -q"
+  metric: pass_rate  # TODO: primary metric printed by predict
+
+surrogate:
+  family: none
+  variants:
+    - { name: v1 }
+
+gates:
+  correctness: "pass_rate == 1.0"  # TODO: adjust to what "good" means here
+  budgets: { samples: 100 }
+
+deliverables:
+  branch: "flywheel/__PROBLEM_NAME__-<ts>"  # winner branch, created in THIS repo
+  tests: []  # TODO: e.g. ["tests/test_<thing>.py"]
+  docs: []
+
+constraints:
+  venv: .venv  # TODO: path to THIS repo's environment/toolchain
+  disk_gb: 2
+  mem_gb: 4
+  timeout: "timeout 600"
+  heavy_bg: false  # true for long runs -> nohup + pgrep path
+
+models:
+  orchestrator: "opencode/muse-spark-1.2-contributor-free"
+  executor: "opencode/muse-spark-1.2-contributor-free"
