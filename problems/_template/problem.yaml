@@ -1,0 +1,42 @@
+problem: my-new-problem
+type: prediction  # ml-system | prediction | feature
+goal: "One-sentence goal for this problem"
+
+datasets:
+  - name: main
+    source: path/to/data.csv  # or url, or sklearn:datasets.load_breast_cancer, or hf:owner/dataset
+    cache: none  # global | none
+    verify: { rows: 1000 }  # optional
+
+blackbox:
+  train: "python problems/my-new-problem/train.py --data {datasets.main.path}"
+  predict: "python problems/my-new-problem/predict.py --model {artifacts.model}"
+  metric: f1
+
+surrogate:
+  family: tabular-rot  # or custom, shap, etc. — free-form
+  variants:
+    - { name: linear }
+    - { name: rbf }
+
+gates:
+  fidelity: "f1 >= 0.85"
+  robustness: "accuracy_drop <= 0.05"  # optional — skip if no metric
+  budgets: { samples: 200 }
+
+deliverables:
+  artifacts: ["artifacts/model.joblib", "artifacts/manifest.json"]
+  tests: ["tests/test_mything.py"]
+  notebooks: ["examples/demo.ipynb"]
+  docs: ["docs/guide.md"]
+
+constraints:
+  venv: .venv
+  disk_gb: 5
+  mem_gb: 8
+  timeout: "timeout 600"
+  heavy_bg: false  # true for long ML runs -> nohup + pgrep path
+
+models:
+  orchestrator: "opencode/muse-spark-1.2-contributor-free"
+  executor: "opencode/muse-spark-1.2-contributor-free"

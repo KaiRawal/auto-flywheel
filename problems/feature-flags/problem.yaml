@@ -1,0 +1,31 @@
+problem: feature-flags
+type: feature
+goal: "Add a JSON feature-flag evaluator to a toy service and prove latency + correctness gates"
+datasets:
+  - name: flags
+    source: path:problems/feature-flags/flags.json
+    cache: none
+blackbox:
+  train: "python problems/feature-flags/build.py"
+  predict: "python problems/feature-flags/eval.py"
+  metric: latency_p95
+surrogate:
+  family: none
+  variants: [{name: v1}]
+gates:
+  correctness: "pass_rate == 1.0"
+  latency: "latency_p95 <= 50"
+  budgets: { samples: 100 }
+deliverables:
+  artifacts: ["artifacts/flags_evaluator.py"]
+  tests: ["tests/test_flags.py"]
+  notebooks: []
+  docs: []
+constraints:
+  venv: .venv
+  disk_gb: 2
+  mem_gb: 4
+  timeout: "timeout 60"
+  heavy_bg: false
+models:
+  orchestrator: "opencode/muse-spark-1.2-contributor-free"

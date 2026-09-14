@@ -1,0 +1,39 @@
+problem: toy-tabular
+type: prediction
+goal: "Binary prediction on sklearn breast-cancer — overkill demo that proves autonomous mode works in <1 min"
+
+datasets:
+  - name: breast-cancer
+    source: sklearn:datasets.load_breast_cancer
+    cache: none
+
+blackbox:
+  train: "python problems/toy-tabular/train.py --out artifacts/model.joblib"
+  predict: "python problems/toy-tabular/predict.py --model artifacts/model.joblib"
+  metric: f1
+
+surrogate:
+  family: none
+  variants:
+    - { name: direct }
+
+gates:
+  fidelity: "f1 >= 0.85"
+  budgets: { samples: 100 }
+
+deliverables:
+  artifacts: ["artifacts/model.joblib", "artifacts/manifest.json"]
+  tests: ["tests/test_toy.py"]
+  notebooks: ["examples/demo.ipynb"]
+  docs: []
+
+constraints:
+  venv: .venv
+  disk_gb: 2
+  mem_gb: 4
+  timeout: "timeout 60"
+  heavy_bg: false
+
+models:
+  orchestrator: "opencode/muse-spark-1.2-contributor-free"
+  executor: "opencode/muse-spark-1.2-contributor-free"
