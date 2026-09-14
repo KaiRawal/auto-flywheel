@@ -29,11 +29,11 @@ deliverables:
 
 constraints:
   venv: .venv
-  disk_gb: 2
-  mem_gb: 4
+  disk_gb: 2  # measured-example (demo fits <1 min; real problems fill via /flywheel-new)
+  mem_gb: 4  # measured-example (demo fits <1 min; real problems fill via /flywheel-new)
   timeout: "timeout 60"
   heavy_bg: false
 
 models:
-  orchestrator: "opencode/muse-spark-1.2-contributor-free"
-  executor: "opencode/muse-spark-1.2-contributor-free"
+  orchestrator: "opencode/muse-spark-1.3-contributor-free"
+  executor: "opencode/muse-spark-1.3-contributor-free"

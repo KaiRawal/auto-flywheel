@@ -15,7 +15,8 @@ Call `question` at:
 - researcher tie (two equally good candidate metrics/backbones)
 - planner commit-split choice
 - unclear `problem.yaml` field
+- resource conflict (host drifted below `problem.yaml: constraints` — halt and propose abort/downscale instead of reinterpreting silently)
 
-Otherwise identical: own `runs/<problem>/<ts>/flywheel-state.json`, dispatch executor/reviewer/researcher/planner/executor, use `nohup` + `while pgrep ... sleep 10`, guard disk/mem/timeout, respect `models:` overrides, log every `Q:`/`A:` alongside `Decision:`/`Rationale:` blocks **via `shared/observe.py append` (dual-writes `events.jsonl` + `decisions.md`; never hand-append)**.
+Otherwise identical: own `runs/<problem>/<ts>/flywheel-state.json`, confirm resources once at run start (`df -h /`, `vm_stat`/`free`, `nproc` vs `constraints`, abort/downscale + log on drift), dispatch executor/reviewer/researcher/planner/executor (parallel light variants only; heavy serially, one job → one log), use `nohup` + `while pgrep ... sleep 10`, respect `models:` overrides, log every `Q:`/`A:` alongside `Decision:`/`Rationale:` blocks **via `shared/observe.py append` (dual-writes `events.jsonl` + `decisions.md`; never hand-append)**.
 
 If the user does not answer, proceed with the planner's default and log it.

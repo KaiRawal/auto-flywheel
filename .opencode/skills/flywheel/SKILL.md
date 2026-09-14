@@ -9,20 +9,22 @@ A problem-agnostic harness for iteratively building ML systems, predictors, or s
 
 ## Modes
 
-| Mode | Orchestrator | Question tool |
-|------|--------------|---------------|
+| Mode | Agent (all `primary`) | Question tool |
+|------|------------------------|---------------|
 | `autonomous` | `flywheel-orchestrator` | never — log to `decisions.md` |
 | `interactive` | `flywheel-orchestrator-interactive` | on ambiguous gate fail, researcher tie, commit-split |
 | `new` | `problem-architect` | always — Socratic YAML builder |
 
+Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat.
+
 ## Loop
 
-1. **Sandbox loop** (`sandbox-executor` + `sandbox-reviewer`, gate-driven, up to 3 nudges or until pass). Executor copies data (global cache), trains one variant, writes `metrics.json`. Reviewer scores vs `gates:` in `problem.yaml`.
+1. **Sandbox loop** (`sandbox-executor` + `sandbox-reviewer`, gate-driven, up to 3 nudges or until pass). Executor copies data (global cache), trains one variant, writes `metrics.json`. Parallel light variants only; heavy variants run serially, one job → one log. Reviewer scores vs `gates:` in `problem.yaml`.
 2. **Research** (`researcher`) — only on plateau. Mines `references` / docs / papers for new metric/backbone ideas. Proposes candidates, never mutates `problem.yaml`.
 3. **Plan** (`planner`) — merges logs + research into `runs/<p>/<ts>/plan.md` with chosen variant(s), pinned thresholds, commit split.
-4. **Flywheel** (`flywheel-executor`) — consumes `plan.md`, fires `nohup` BG jobs, polls via `while pgrep -f <job> >/dev/null; do sleep 10; done`, picks winners by gate margin, mints artifacts, generates tests/notebooks, runs `pytest/ruff/nbconvert` under `timeout`.
+4. **Flywheel** (`flywheel-executor`) — consumes `plan.md`, fires `nohup` BG jobs (one job → one log, never two peak-RAM at once), polls via `while pgrep -f <job> >/dev/null; do sleep 10; done`, picks winners by gate margin, mints artifacts, generates tests/notebooks via builder scripts, runs `pytest/ruff/nbconvert` under `timeout`.
 
-All installs in `{constraints.venv}`. Global caches reused. `df -h` / `vm_stat` guards before heavy steps.
+All installs in `{constraints.venv}`. Global caches reused. Resources measured at setup (`/flywheel-new`), confirmed once at run start; limits live in `problem.yaml: constraints`.
 
 ## Observability
 

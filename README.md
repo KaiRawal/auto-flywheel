@@ -22,7 +22,7 @@ A problem-agnostic **autonomous delivery harness for [opencode](https://opencode
 - **Flywheel-executor** runs that workflow to completion — firing long jobs in the background, multitasking lint/docs/tests while models train.
 - **Provenance built in**: every phase transition and gate score is logged to `events.jsonl` (machine-readable) + `decisions.md` (human-readable) via `shared/observe.py`, so you can interrogate any run.
 
-Two modes, one codebase: **autonomous** (never asks, just logs) and **interactive** (asks you at ambiguous failures).
+Three phases, one codebase: **setup** (`/flywheel-new` interview, once) → **autonomous** run (never asks, just logs) or **interactive** run (asks you at ambiguous failures) → repeat.
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ Then launch opencode from the repo root:
 opencode
 ```
 
-> **First launch:** after opencode starts, **quit and restart it once** so the bundled agents (`flywheel-orchestrator`, …) and commands (`/flywheel-run`, …) register. (Opencode only picks up new agent/command files on startup.)
+> **First launch:** after opencode starts, **quit and restart it once** so the bundled agents (`flywheel-orchestrator`, `flywheel-orchestrator-interactive`, `problem-architect`, …) and commands (`/flywheel-new`, `/flywheel-run`, …) register. (Opencode only picks up new agent/command files on startup.)
 
 > **Permissions:** `opencode.json` pre-allows the checkout at `~/Oxford/Projects/auto-flywheel/**`. If you cloned elsewhere, update that path to your checkout (or leave the default `ask` behavior).
 
@@ -168,7 +168,7 @@ runs/<problem>/<ts>/           # scratch (gitignored): events.jsonl, decisions.m
 artifacts/                     # committed keepers (hashes in manifest.json)
 shared/observe.py              # provenance logger (stdlib only)
 shared/event-schema.md         # event schema + query recipes
-.opencode/agent/               # orchestrator, executors, reviewer, researcher, planner
+.opencode/agent/               # orchestrators (primary), problem-architect (primary setup), executors, reviewer, researcher, planner
 .opencode/command/             # /flywheel-run, /flywheel-new, /flywheel-status, ...
 .opencode/skills/flywheel/     # skill definition for the loop
 ```
@@ -187,8 +187,8 @@ Or per-run: `/flywheel-run problems/toy-tabular --model openai/gpt-5`. The orche
 ## Safety guards
 
 - `.venv`-only installs — never system `pip`, `brew`, `apt`, or `npm`
-- `df -h /` and `vm_stat` checks before every heavy step (budgets in `problem.yaml: constraints`)
-- `timeout 600 ...` around heavy commands; long jobs run via `nohup … &` and are polled with `pgrep` so verification proceeds in parallel
+- Resources measured once at setup (`/flywheel-new` proposes `constraints` from `df`/`vm_stat`/`free` minus headroom), confirmed once at run start (abort/downscale + log on drift); executors stay inside `problem.yaml: constraints` without re-measuring
+- `timeout 600 ...` around heavy commands; long jobs run via `nohup … &` (one job → one log) and are polled with `pgrep` so verification proceeds in parallel; never two peak-RAM phases at once
 - Global caches (`~/.cache/huggingface`, `~/.cache/torch`) are reused, never re-downloaded
 
 Contributor rules for agents live in `AGENTS.md`.

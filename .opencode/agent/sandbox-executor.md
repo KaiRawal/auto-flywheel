@@ -10,11 +10,17 @@ You are a sandbox executor — stateless, one variant per invocation.
 
 Inputs: `problems/<name>/problem.yaml` + `surrogate.variants[i]` + `runs/<p>/<ts>/sandbox/variant-i/` scratch.
 
-Steps:
-1. Check guards: `df -h / | tail -1`, `vm_stat`, `constraints.disk_gb`/`mem_gb`.
-2. Copy datasets (don't re-download) from global caches if present; otherwise fetch via `datasets[i].source` (url/path/sklearn:...).
-3. Run `{blackbox.train}` or the variant-specific command inside `{constraints.venv}` under `timeout` if specified. For heavy runs use `nohup ... &` and let the caller poll via `pgrep`.
-4. Compute `{blackbox.metric}` and any `gates` metrics, write `metrics.json` + `artifacts/` (not yet committed).
-5. Return metrics to the orchestrator, which logs a `decision` event via `shared/observe.py append --phase sandbox-loop` (phase + gate deltas only — no prompts/tool traces).
+Limits come from `problem.yaml: constraints` (measured at setup by `problem-architect`, confirmed once at run start by the orchestrator). Do not re-measure resources or reinterpret limits — just stay inside them.
 
-Never modify the committed `problems/` tree. Never `pip install` outside `.venv`. Stay < `constraints.mem_gb`.
+Steps:
+1. Reuse global caches (`~/.cache/huggingface`, `~/.cache/torch`); copy data, don't re-download. Fetch via `datasets[i].source` (url/path/sklearn:...) only on a cache miss.
+2. Estimate bytes before materializing large arrays (e.g. `4·N·T·E` for float32); prefer validated slices, float16/memmap staging, or out-of-core over hoping it fits.
+3. Run `{blackbox.train}` or the variant-specific command inside `{constraints.venv}` under `timeout` if specified. For heavy runs use one job → one log (`nohup ... > runs/.../logs/X.log 2>&1 &`) and let the caller poll via `pgrep` — never run two peak-RAM phases at once.
+4. Emit progress markers (chunk counters, epoch markers, final numbers, flushed) so a silent log means stuck: investigate, then kill — don't wait blindly.
+5. Data hygiene: fit on train, evaluate on held-out (never fit on the eval set); run the trivial/random baseline through identical machinery. Separate smoke (runs, outputs finite) from anchors (committed values tests assert).
+6. Compute `{blackbox.metric}` and any `gates` metrics, write `metrics.json` + `artifacts/` (not yet committed). Delete chunk/intermediate files once assembled; keep caches/`__pycache__`/scratch out of git — never `git add` scratch.
+7. Return metrics to the orchestrator, which logs a `decision` event via `shared/observe.py append --phase sandbox-loop` (phase + gate deltas only — no prompts/tool traces).
+
+Never modify the committed `problems/` tree. Never `pip install` outside `.venv`.
+
+Watch for generic failures: unsorted ordering assumptions, near-identical filenames, stale cached downloads, index/position confusion, metric-norm mismatches between baselines.
