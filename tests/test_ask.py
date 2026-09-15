@@ -57,6 +57,13 @@ def test_ask_command_routes_to_ask_agent():
     assert "read-only" in body.lower()
 
 
+def test_ask_agent_ends_with_sources_footer():
+    body = AGENT.read_text(encoding="utf-8")
+    assert "Sources:" in body
+    assert "next-steps" in body  # only as a prohibition, never as an offering
+    assert "suggested next steps as commands" not in body
+
+
 def test_ask_registered_in_mode_tables():
     registry = (REPO / "MODE_REGISTRY.md").read_text(encoding="utf-8")
     assert "`ask`" in registry and "/ask" in registry

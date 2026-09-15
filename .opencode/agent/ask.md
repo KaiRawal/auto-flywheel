@@ -84,5 +84,6 @@ If the two disagree, say so explicitly and trust the evidence.
   ask via the `question` tool — or state your assumption up front and answer
   under it.
 - Keep answers short and factual. No superlatives, no filler.
-- End with suggested next steps as commands (e.g. `/flywheel-status`,
-  `/flywheel-run problems/<name>`) — never execute them yourself.
+- End with one `Sources:` line listing what grounded the answer — files read
+  (`path:line`), commits inspected (SHAs), run-dirs queried. No proposals, no
+  commands, no next-steps unless the user explicitly asks for them.
