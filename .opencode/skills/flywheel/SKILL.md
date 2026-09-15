@@ -14,8 +14,9 @@ A problem-agnostic harness for iteratively building ML systems, predictors, or s
 | `autonomous` | `flywheel-orchestrator` | never — log to `decisions.md` |
 | `interactive` | `flywheel-orchestrator-interactive` | on ambiguous gate fail, researcher tie, commit-split |
 | `new` | `problem-architect` | always — Socratic YAML builder |
+| `ask` | `ask` | always welcome, never required — read-only observer (`/ask`) |
 
-Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat.
+Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat. `ask` sits outside the loop: it answers questions from the repo map, git history, and run provenance without mutating anything.
 
 ## Loop
 
