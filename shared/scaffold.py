@@ -22,33 +22,32 @@ from pathlib import Path
 
 SOURCE_ROOT = Path(__file__).resolve().parent.parent
 
-AGENT_FILES = [
-    "flywheel-executor.md",
-    "flywheel-orchestrator-interactive.md",
-    "flywheel-orchestrator.md",
-    "planner.md",
-    "problem-architect.md",
-    "researcher.md",
-    "sandbox-executor.md",
-    "sandbox-reviewer.md",
-]
 
-COMMAND_FILES = [
-    "flywheel-abort.md",
-    "flywheel-new.md",
-    "flywheel-run-interactive.md",
-    "flywheel-run.md",
-    "flywheel-status.md",
-]
+def _discover(relative_dir: str, *patterns: str, exclude: frozenset[str] = frozenset()) -> list[str]:
+    """List shipped files in SOURCE_ROOT/<relative_dir> (sorted, auto-discovered).
 
-SKILL_FILES = ["SKILL.md"]
+    New agents/commands/skills/shared docs ship on next flywheel-init with no
+    list to update. Callers pass exclude for lab-only files (e.g. scaffold.py).
+    """
+    base = SOURCE_ROOT / relative_dir
+    found: set[str] = set()
+    for pattern in patterns:
+        for path in base.glob(pattern):
+            if path.is_file() and path.name not in exclude:
+                found.add(path.name)
+    return sorted(found)
 
-SHARED_FILES = [
-    "observe.py",
-    "event-schema.md",
-    "gate-contract.md",
-    "decision-log.md",
-]
+
+# Auto-discovered so flywheel-init always ships whatever is available,
+# including ask.md. Lab-only files stay excluded (scaffold.py itself,
+# problem.yaml/README.md lab templates — only problem.scaffold.yaml ships).
+AGENT_FILES = _discover(".opencode/agent", "*.md")
+
+COMMAND_FILES = _discover(".opencode/command", "*.md")
+
+SKILL_FILES = _discover(".opencode/skills/flywheel", "*.md")
+
+SHARED_FILES = _discover("shared", "*.py", "*.md", exclude=frozenset({"scaffold.py"}))
 
 # Ordered (pattern, replacement). Specific rules first, generic path
 # remaps after. Applied to copied prompt/config markdown only.
@@ -89,6 +88,7 @@ REWRITE_RULES: list[tuple[str, str]] = [
     (r"problems/<[^>]*>/problem\.yaml", r".flywheel/problem.yaml"),
     (r"problems/\*/problem\.yaml", r".flywheel/problem.yaml"),
     (r"problems/<[^>]*>", r".flywheel"),
+    (r"problems/\*", r".flywheel"),
     (r"runs/<p>/<ts>", r".flywheel/runs/<ts>"),
     (r"runs/<problem>/<ts>", r".flywheel/runs/<ts>"),
     (r"runs/toy-tabular/<ts>", r".flywheel/runs/<ts>"),
@@ -258,7 +258,7 @@ def self_check(target: Path) -> list[str]:
                     "these agents are not registered: "
                     + ", ".join(missing)
                     + f" — quit and restart opencode in {target}, then run "
-                    "`opencode agent list | grep -E 'flywheel|planner|researcher|sandbox|architect'`"
+                    "`opencode agent list | grep -E 'ask|flywheel|planner|researcher|sandbox|architect'`"
                 )
         except (subprocess.SubprocessError, OSError) as exc:
             warnings.append(f"could not run `opencode agent list`: {exc}")

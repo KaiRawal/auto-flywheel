@@ -127,8 +127,8 @@ cd /path/to/myrepo && opencode   # restart once so agents/commands register
 What you get in your repo (all paths below are relative to it):
 
 ```
-.opencode/agent/flywheel-*.md, planner, researcher, sandbox-*, problem-architect
-.opencode/command/flywheel-*.md   # /flywheel-run, /flywheel-new, /flywheel-status, ...
+.opencode/agent/flywheel-*.md, planner, researcher, sandbox-*, problem-architect, ask.md
+.opencode/command/flywheel-*.md, ask.md   # /flywheel-run, /flywheel-new, /flywheel-status, ..., /ask
 .opencode/skills/flywheel/        # skill definition
 .flywheel/problem.yaml            # your spec (starter template, TODOs inside)
 .flywheel/shared/                 # observe.py logger + gate/observability contracts
