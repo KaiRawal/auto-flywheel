@@ -49,6 +49,14 @@ def test_ask_agent_knows_provenance():
         assert ref in body, f"ask prompt missing {ref}"
 
 
+def test_ask_agent_knows_its_mode():
+    body = AGENT.read_text(encoding="utf-8")
+    assert "ASK mode" in body
+    assert "overrides all other instructions" in body
+    assert "Tab-switch" in body and "build" in body
+    assert "one redirect, then stop" in body
+
+
 def test_ask_command_routes_to_ask_agent():
     assert COMMAND.exists()
     fm = frontmatter(COMMAND)
