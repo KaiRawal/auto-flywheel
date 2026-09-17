@@ -28,6 +28,11 @@ gates:
   correctness: "pass_rate == 1.0"  # TODO: adjust to what "good" means here
   budgets: { samples: 100 }
 
+hints: ""  # TODO (optional): free-text priors to nudge the search, e.g.
+  # "Try X before Y; Z helped in the pilot; don't waste samples on W."
+  # Biases search ORDER only (executor tries hinted directions first, planner
+  # weighs them) — never gates, thresholds, or evaluation. Empty = open search.
+
 deliverables:
   branch: "flywheel/__PROBLEM_NAME__-<ts>"  # winner branch, created in THIS repo
   tests: []  # TODO: e.g. ["tests/test_<thing>.py"]

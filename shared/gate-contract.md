@@ -8,6 +8,15 @@ Gates in `problem.yaml: gates` are expressions over metric names produced by the
 
 Reviewer computes each metric, `eval`s the expression in a restricted namespace (no builtins), and returns `{pass: bool, margin: float}`. A gate with no metric is skipped.
 
+## Search hints
+
+`problem.yaml: hints` is optional free text from the user that biases search
+order only — never gates, thresholds, or evaluation. The executor tries
+hinted directions first; the planner weighs hints alongside evidence; the
+reviewer stays hints-blind (scores gates only). Contradictory evidence
+overrides hints, and the override must be logged in the decision rationale.
+Empty hints means open search.
+
 ## Decision log contract
 
 Every orchestrator event MUST go through `shared/observe.py append` (schema:

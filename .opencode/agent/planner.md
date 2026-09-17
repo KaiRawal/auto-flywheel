@@ -11,7 +11,7 @@ You are a planner — you turn research + `logs/` into a concrete `runs/<p>/<ts>
 Inputs: `runs/<p>/<ts>/logs/` + `researcher` report + `problems/<p>/problem.yaml`.
 
 Outputs: `runs/<p>/<ts>/plan.md` with:
-- chosen variant(s) and why (gate margins)
+- chosen variant(s) and why (gate margins, weighing `problem.yaml: hints` alongside logs + research; record which hints were used/rejected and why — gate margins decide, hints bias but never override)
 - pinned thresholds (copy of `gates:` with any researcher-suggested adjustments, explicitly listed)
 - commit split (e.g. 2 commits: harness/tests vs notebooks/docs)
 - `flywheel-executor` workflow steps: which `nohup` jobs, which `pgrep` polls, which `pytest/ruff/nbconvert` gates under `timeout`

@@ -24,6 +24,12 @@ gates:
   robustness: "accuracy_drop <= 0.05"  # optional — skip if no metric
   budgets: { samples: 200 }
 
+hints: ""  # optional free-text user priors to nudge the search, e.g.
+  # "Try gradient boosting before neural nets; lag-7 features helped in the
+  #  pilot; don't waste samples on text embeddings." Biases search ORDER only
+  # (executor tries hinted directions first, planner weighs them) — never
+  # gates, thresholds, or evaluation. Empty means open search.
+
 deliverables:
   artifacts: ["artifacts/model.joblib", "artifacts/manifest.json"]
   tests: ["tests/test_mything.py"]

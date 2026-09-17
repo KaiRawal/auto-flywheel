@@ -18,10 +18,11 @@ Flow:
    - What metric proves it works? (f1, accuracy, latency_p95, custom.py:fn)
    - What gate threshold is "good enough"?
    - What deliverables? (artifacts/*.joblib, tests/*.py, examples/*.ipynb)
+   - Any search hints? (optional free text: what to try first, feature ideas, dead ends to avoid — biases search order only, never gates)
    - Confirm the measured `constraints` from step 2 (adjust down on request, never up beyond measured free minus headroom).
-4. Write `problems/<slug>/problem.yaml` by filling the template with the agreed type/data/metric/gates/deliverables/`constraints`. Validate gates parse against `shared/gate-contract.md`.
-5. Log what you chose and why via `shared/observe.py append --phase new --event decision` (dual-writes `decisions.md` + `events.jsonl`), including measured vs promised resources.
+4. Write `problems/<slug>/problem.yaml` by filling the template with the agreed type/data/metric/gates/deliverables/`hints`/`constraints` (write `hints:` verbatim — never interpret or expand it). Validate gates parse against `shared/gate-contract.md`.
+5. Log what you chose and why via `shared/observe.py append --phase new --event decision` (dual-writes `decisions.md` + `events.jsonl`), including measured vs promised resources and any search hints given.
 
 Never invent a hard-coded metric name — the user defines gates. Keep it problem-agnostic. Offer the `toy-tabular` example if they are unsure.
 
-Autonomous variant: do not call `question`; measure if possible then pick sensible defaults (e.g. `f1 >= 0.8`, `type: prediction`, `sklearn:datasets.load_breast_cancer`) and log them.
+Autonomous variant: do not call `question`; measure if possible then pick sensible defaults (e.g. `f1 >= 0.8`, `type: prediction`, `sklearn:datasets.load_breast_cancer`, `hints: ""`) and log them.
