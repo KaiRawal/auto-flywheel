@@ -40,8 +40,10 @@ def test_executor_and_planner_consume_hints():
     assert "never override" in planner
 
 
-def test_reviewer_stays_hints_blind():
-    assert "hints" not in REVIEWER.read_text(encoding="utf-8")
+def test_reviewer_scores_hints_blind_but_diagnoses_freely():
+    text = REVIEWER.read_text(encoding="utf-8")
+    assert "hints-blind" in text, "reviewer must score gates hints-blind"
+    assert "may cite" in text, "reviewer diagnosis may cite hints/learnings"
 
 
 def test_contract_documents_hint_semantics():
