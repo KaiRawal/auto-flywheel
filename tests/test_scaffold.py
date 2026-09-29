@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from shared.scaffold import AGENT_FILES, COMMAND_FILES, scaffold
+from shared.scaffold import AGENT_FILES, COMMAND_FILES, SKILL_FILES, scaffold
 
 REPO = Path(__file__).resolve().parent.parent
 INIT = REPO / "scripts" / "flywheel-init"
@@ -28,7 +28,7 @@ def scaffolded_md_files(target: Path) -> list[Path]:
     return [
         *(target / ".opencode" / "agent" / f for f in AGENT_FILES),
         *(target / ".opencode" / "command" / f for f in COMMAND_FILES),
-        target / ".opencode" / "skills" / "flywheel" / "SKILL.md",
+        *(target / ".opencode" / "skills" / f for f in SKILL_FILES),
         target / ".flywheel" / "shared" / "event-schema.md",
         target / ".flywheel" / "shared" / "gate-contract.md",
         target / ".flywheel" / "shared" / "decision-log.md",
@@ -66,7 +66,7 @@ def test_rewritten_paths_point_at_flywheel_dir(tmp_path):
     target = tmp_path / "myrepo"
     target.mkdir()
     scaffold(target, "x")
-    orch = (target / ".opencode" / "agent" / "flywheel-orchestrator.md").read_text()
+    orch = (target / ".opencode" / "agent" / "orchestrate.md").read_text()
     assert ".flywheel/problem.yaml" in orch
     assert ".flywheel/shared/observe.py" in orch
     assert ".flywheel/runs/" in orch

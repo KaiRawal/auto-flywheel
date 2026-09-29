@@ -1,6 +1,6 @@
 ---
 description: Abort a running flywheel — kills pids in flywheel-state.json and cleans runs/<problem>/<ts>/sandbox.
-agent: flywheel-orchestrator
+agent: orchestrate
 ---
 
 Abort the run at `$ARGUMENTS`.

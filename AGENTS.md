@@ -7,8 +7,8 @@ Instructions for AI coding agents in this lab.
 - **`.venv` only** — never `pip install` outside the problem's `.venv` at its root. No `brew`/`apt`/`npm`.
 - Run from the problem root (or lab root with `workdir`): `.venv/bin/python -m pytest`, `.venv/bin/python -m ruff check .`, `.venv/bin/jupyter nbconvert ...`.
 - **Resources: measured once, not hardcoded**:
-  - `/flywheel-new` (`problem-architect`) measures the host once (`df -h /`, `vm_stat`/`free`, `nproc`) and writes `constraints.disk_gb`/`mem_gb`/`heavy_bg` as measured free minus headroom (keep several GB disk + a few GB RAM free). Never invent limits.
-  - The orchestrator confirms once at run start; on drift it aborts/downscales and logs. Executors just stay inside `problem.yaml` limits — no re-measuring.
+  - `/flywheel-new` (`build` + `problem-architect` skill) measures the host once (`df -h /`, `vm_stat`/`free`, `nproc`) and writes `constraints.disk_gb`/`mem_gb`/`heavy_bg` as measured free minus headroom (keep several GB disk + a few GB RAM free). Never invent limits.
+  - The `orchestrate` agent (skill `orchestrate-autonomous`/`orchestrate-interactive`) confirms once at run start; on drift it aborts/downscales and logs. Executors just stay inside `problem.yaml` limits — no re-measuring.
   - Wrap with GNU `timeout` where appropriate: `timeout 600 .venv/bin/python train.py`
 - **Heavy jobs in background** — one job → one log: `nohup .venv/bin/python train.py > runs/<p>/<ts>/logs/X.log 2>&1 &` then poll with `while pgrep -f "train.py" >/dev/null; do sleep 10; done` so lint/docs/tests can run in parallel. Never run two peak-RAM phases at once. Never `sleep 590` polling.
 - **Global caches** — reuse `~/.cache/huggingface`, `~/.cache/torch` etc. Copy, don't re-download.

@@ -1,6 +1,6 @@
 ---
 description: Show flywheel state for a problem — reads runs/<problem>/<ts>/flywheel-state.json and decisions.md.
-agent: flywheel-orchestrator
+agent: orchestrate
 ---
 
 Show status for `$ARGUMENTS` (a problem path or empty for the latest run).

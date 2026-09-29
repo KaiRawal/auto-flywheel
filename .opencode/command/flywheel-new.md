@@ -1,9 +1,9 @@
 ---
-description: Scaffold a new problem via Socratic interview — launches problem-architect.
-agent: problem-architect
+description: Scaffold a new problem via Socratic interview — build loads the problem-architect skill.
+agent: build
 ---
 
-Launch the problem-architect to interview the user and scaffold `problems/<name>/problem.yaml`.
+Load the `problem-architect` skill to interview the user and scaffold `problems/<name>/problem.yaml`.
 
 User input: $ARGUMENTS (optional problem name or "help")
 

@@ -62,8 +62,8 @@ are its contracts. Agents live in `.opencode/agent/`, commands in
 
 **Harness lifecycle.** `new` (setup interview, once) → `autonomous` /
 `interactive` (long run) → repeat. Agent roster and what each owns:
-`problem-architect` (setup interview, measures resources once);
-`flywheel-orchestrator` / `-interactive` (own the loop + run state, confirm
+`build` + `problem-architect` skill (setup interview, measures resources once);
+`orchestrate` / `orchestrate-interactive` (own the loop + run state, confirm
 resources once at run start, dispatch everything else);
 `sandbox-executor` (trains one variant, writes `metrics.json`);
 `sandbox-reviewer` (scores `metrics.json` vs `problem.yaml: gates`);

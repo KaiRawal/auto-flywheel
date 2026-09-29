@@ -45,7 +45,7 @@ Then launch opencode from the repo root:
 opencode
 ```
 
-> **First launch:** after opencode starts, **quit and restart it once** so the bundled agents (`flywheel-orchestrator`, `flywheel-orchestrator-interactive`, `problem-architect`, …) and commands (`/flywheel-new`, `/flywheel-run`, …) register. (Opencode only picks up new agent/command files on startup.)
+> **First launch:** after opencode starts, **quit and restart it once** so the bundled agents (`orchestrate`, `orchestrate-interactive`, `plan`, `build`, `ask`, …) and commands (`/flywheel-new`, `/flywheel-run`, …) register. (Opencode only picks up new agent/command files on startup.)
 
 > **Permissions:** `opencode.json` pre-allows the checkout at `~/Oxford/Projects/auto-flywheel/**`. If you cloned elsewhere, update that path to your checkout (or leave the default `ask` behavior).
 
@@ -78,7 +78,7 @@ Interactive variant (asks you at ambiguous gate failures, researcher ties, commi
 /flywheel-new
 ```
 
-The `problem-architect` interviews you (type, data, metric, gate threshold, deliverables, budgets) and writes `problems/<name>/problem.yaml`. Prefer files? Copy the template manually instead:
+The `build` agent (with the `problem-architect` skill) interviews you (type, data, metric, gate threshold, deliverables, budgets) and writes `problems/<name>/problem.yaml`. Prefer files? Copy the template manually instead:
 
 ```bash
 cp -r problems/_template problems/my-new-thing
@@ -127,14 +127,22 @@ cd /path/to/myrepo && opencode   # restart once so agents/commands register
 What you get in your repo (all paths below are relative to it):
 
 ```
-.opencode/agent/flywheel-*.md, planner, researcher, sandbox-*, problem-architect, ask.md
+.opencode/agent/orchestrate*.md, plan.md, build.md, planner, researcher, sandbox-*, ask.md
 .opencode/command/flywheel-*.md, ask.md   # /flywheel-run, /flywheel-new, /flywheel-status, ..., /ask
-.opencode/skills/flywheel/        # skill definition
+.opencode/skills/flywheel/        # index skill (points to problem-architect, orchestrate-autonomous/interactive)
+.opencode/skills/problem-architect/ orchestrate-autonomous/ orchestrate-interactive/
 .flywheel/problem.yaml            # your spec (starter template, TODOs inside)
 .flywheel/shared/                 # observe.py logger + gate/observability contracts
 ```
 
-`flywheel-init` is copy-only and idempotent: re-running it refreshes the harness files, merges `.gitignore` (`.flywheel/runs/`, `.venv/`) and an `AGENTS.md` section without touching anything else, and refuses to overwrite files whose content differs. Updating is just `git pull` here + re-run there. Then, inside opencode in your repo:
+`flywheel-init` is copy-only and idempotent: re-running it refreshes the harness files, merges `.gitignore` (`.flywheel/runs/`, `.venv/`) and an `AGENTS.md` section without touching anything else, and refuses to overwrite files whose content differs. To update a repo scaffolded with an older version, use `flywheel-update` (deletes stale pre-rename files, then installs the latest; refuses on dirty trees unless `--allow-dirty`, `--dry-run` previews):
+
+```bash
+git pull  # in auto-flywheel: fetch the latest harness
+./auto-flywheel/scripts/flywheel-update /path/to/myrepo --dry-run
+./auto-flywheel/scripts/flywheel-update /path/to/myrepo
+cd /path/to/myrepo && opencode   # restart once so agents/commands register
+```
 
 ```
 /flywheel-new    # fills .flywheel/problem.yaml: scope, test command, gates
@@ -168,9 +176,9 @@ runs/<problem>/<ts>/           # scratch (gitignored): events.jsonl, decisions.m
 artifacts/                     # committed keepers (hashes in manifest.json)
 shared/observe.py              # provenance logger (stdlib only)
 shared/event-schema.md         # event schema + query recipes
-.opencode/agent/               # orchestrators (primary), problem-architect (primary setup), executors, reviewer, researcher, planner
+.opencode/agent/               # orchestrate* + plan/build/ask (primary), executors, reviewer, researcher, planner (subagents)
 .opencode/command/             # /flywheel-run, /flywheel-new, /flywheel-status, ...
-.opencode/skills/flywheel/     # skill definition for the loop
+.opencode/skills/flywheel/     # index skill; procedures in problem-architect, orchestrate-autonomous/interactive
 ```
 
 ## Swapping models (model-agnostic)

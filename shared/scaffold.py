@@ -2,8 +2,9 @@
 
 Usage:
     scripts/flywheel-init <target-dir> [problem-name]
+    scripts/flywheel-update <target-dir> [problem-name] [--dry-run] [--allow-dirty]
 
-Copies agents, commands, the flywheel skill, the provenance logger and a
+Copies agents, commands, skills, the provenance logger and a
 starter `.flywheel/problem.yaml` into an existing repo. No network, no
 symlinks, nothing that breaks if this checkout moves or is deleted.
 
@@ -45,9 +46,29 @@ AGENT_FILES = _discover(".opencode/agent", "*.md")
 
 COMMAND_FILES = _discover(".opencode/command", "*.md")
 
-SKILL_FILES = _discover(".opencode/skills/flywheel", "*.md")
+
+def _discover_skills() -> list[str]:
+    """List skill files as paths relative to .opencode/skills (e.g. flywheel/SKILL.md)."""
+    base = SOURCE_ROOT / ".opencode" / "skills"
+    found: set[str] = set()
+    for path in base.glob("*/*.md"):
+        if path.is_file():
+            found.add(str(path.relative_to(base)))
+    return sorted(found)
+
+
+SKILL_FILES = _discover_skills()
 
 SHARED_FILES = _discover("shared", "*.py", "*.md", exclude=frozenset({"scaffold.py"}))
+
+# Files removed upstream (pre-rename layout). `flywheel-update` deletes these
+# outright (git covers recovery); still-shipped files keep abort-on-collision
+# via install_file so user-modified harness files are never clobbered.
+STALE_FILES = [
+    ".opencode/agent/flywheel-orchestrator.md",
+    ".opencode/agent/flywheel-orchestrator-interactive.md",
+    ".opencode/agent/problem-architect.md",
+]
 
 # Ordered (pattern, replacement). Specific rules first, generic path
 # remaps after. Applied to copied prompt/config markdown only.
@@ -185,8 +206,8 @@ def scaffold(target: Path, problem: str) -> dict:
         )
     for name in SKILL_FILES:
         put(
-            SOURCE_ROOT / ".opencode" / "skills" / "flywheel" / name,
-            target / ".opencode" / "skills" / "flywheel" / name,
+            SOURCE_ROOT / ".opencode" / "skills" / name,
+            target / ".opencode" / "skills" / name,
         )
     for name in SHARED_FILES:
         src = SOURCE_ROOT / "shared" / name
@@ -229,6 +250,123 @@ def scaffold(target: Path, problem: str) -> dict:
     return counts
 
 
+def prune_stale(target: Path, dry_run: bool = False) -> list[str]:
+    """Delete files removed upstream. Returns removed paths (relative strings)."""
+    removed: list[str] = []
+    for rel in STALE_FILES:
+        dst = target / rel
+        if dst.is_file():
+            removed.append(rel)
+            if not dry_run:
+                dst.unlink()
+    return removed
+
+
+def is_git_clean(target: Path) -> bool | None:
+    """True if clean, False if dirty, None if not a git repo."""
+    check = subprocess.run(
+        ["git", "-C", str(target), "rev-parse", "--is-inside-work-tree"],
+        capture_output=True,
+        check=False,
+    )
+    if check.returncode != 0:
+        return None
+    status = subprocess.run(
+        ["git", "-C", str(target), "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return status.stdout.strip() == ""
+
+
+def _would_install(src: Path, dst: Path) -> str:
+    """Dry-run counterpart of install_file: wrote | same | collision (no writes)."""
+    content = rewrite_text(src.read_text(encoding="utf-8"))
+    if dst.exists():
+        return "same" if dst.read_text(encoding="utf-8") == content else "collision"
+    return "wrote"
+
+
+def update(
+    target: Path,
+    problem: str,
+    dry_run: bool = False,
+    allow_dirty: bool = False,
+) -> dict:
+    """Delete stale harness files, then install latest. Raises SystemExit on error."""
+    if not target.is_dir():
+        raise SystemExit(f"error: target is not a directory: {target}")
+    clean = is_git_clean(target)
+    if clean is False and not allow_dirty:
+        raise SystemExit(
+            f"error: {target} has uncommitted changes — commit or stash, "
+            "or re-run with --allow-dirty."
+        )
+    removed = prune_stale(target, dry_run=dry_run)
+    if dry_run:
+        collisions: list[str] = []
+        counts: dict = {"removed": list(removed), "wrote": 0, "same": 0}
+        for name in AGENT_FILES:
+            outcome = _would_install(
+                SOURCE_ROOT / ".opencode" / "agent" / name,
+                target / ".opencode" / "agent" / name,
+            )
+            if outcome == "collision":
+                collisions.append(str(target / ".opencode" / "agent" / name))
+            else:
+                counts[outcome] += 1
+        for name in COMMAND_FILES:
+            outcome = _would_install(
+                SOURCE_ROOT / ".opencode" / "command" / name,
+                target / ".opencode" / "command" / name,
+            )
+            if outcome == "collision":
+                collisions.append(str(target / ".opencode" / "command" / name))
+            else:
+                counts[outcome] += 1
+        for name in SKILL_FILES:
+            outcome = _would_install(
+                SOURCE_ROOT / ".opencode" / "skills" / name,
+                target / ".opencode" / "skills" / name,
+            )
+            if outcome == "collision":
+                collisions.append(str(target / ".opencode" / "skills" / name))
+            else:
+                counts[outcome] += 1
+        for name in SHARED_FILES:
+            src = SOURCE_ROOT / "shared" / name
+            dst = target / ".flywheel" / "shared" / name
+            if name.endswith(".py"):
+                if dst.exists():
+                    if dst.read_bytes() != src.read_bytes():
+                        collisions.append(str(dst))
+                    else:
+                        counts["same"] += 1
+                else:
+                    counts["wrote"] += 1
+            else:
+                outcome = _would_install(src, dst)
+                if outcome == "collision":
+                    collisions.append(str(dst))
+                else:
+                    counts[outcome] += 1
+        if not (target / ".flywheel" / "problem.yaml").exists():
+            counts["wrote"] += 1
+        else:
+            counts["same"] += 1
+        if collisions:
+            raise SystemExit(
+                "Refusing to overwrite files with different content:\n"
+                + "\n".join(f"  - {c}" for c in collisions)
+                + "\nDelete, move, or reconcile them, then re-run."
+            )
+        return counts
+    counts = scaffold(target, problem)
+    counts["removed"] = removed
+    return counts
+
+
 def self_check(target: Path) -> list[str]:
     warnings: list[str] = []
     if shutil.which("python3") is None:
@@ -258,7 +396,7 @@ def self_check(target: Path) -> list[str]:
                     "these agents are not registered: "
                     + ", ".join(missing)
                     + f" — quit and restart opencode in {target}, then run "
-                    "`opencode agent list | grep -E 'ask|flywheel|planner|researcher|sandbox|architect'`"
+                    "`opencode agent list | grep -E 'ask|orchestrate|plan|build|planner|researcher|sandbox'`"
                 )
         except (subprocess.SubprocessError, OSError) as exc:
             warnings.append(f"could not run `opencode agent list`: {exc}")
@@ -296,11 +434,47 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print(f"scaffolded '{problem}' into {target} ({counts['wrote']} wrote, {counts['same']} kept)")
-    print("  .opencode/agent, .opencode/command, .opencode/skills/flywheel")
+    print("  .opencode/agent, .opencode/command, .opencode/skills/*")
     print("  .flywheel/problem.yaml, .flywheel/shared/*")
     for warning in self_check(target):
         print(f"warning: {warning}")
     print(f"next: cd {target} && opencode   (restart once), then /flywheel-new")
+    return 0
+
+
+def update_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Delete stale flywheel files, then install the latest (copy-only)."
+    )
+    parser.add_argument("target", help="existing repo directory to update")
+    parser.add_argument("problem", nargs="?", help="problem name (default: target dir name)")
+    parser.add_argument("--dry-run", action="store_true", help="preview without changing anything")
+    parser.add_argument(
+        "--allow-dirty", action="store_true", help="run even with uncommitted changes"
+    )
+    args = parser.parse_args(argv)
+
+    target = Path(args.target).resolve()
+    problem = slugify(args.problem or target.name)
+    try:
+        counts = update(target, problem, dry_run=args.dry_run, allow_dirty=args.allow_dirty)
+    except SystemExit as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    removed = counts.get("removed", [])
+    if args.dry_run:
+        print(f"would update '{problem}' in {target} "
+              f"({len(removed)} remove, {counts['wrote']} write, {counts['same']} keep)")
+    else:
+        print(f"updated '{problem}' in {target} "
+              f"({len(removed)} removed, {counts['wrote']} wrote, {counts['same']} kept)")
+    for rel in removed:
+        print(f"  {'would remove' if args.dry_run else 'removed'}: {rel}")
+    if not args.dry_run:
+        for warning in self_check(target):
+            print(f"warning: {warning}")
+        print(f"next: cd {target} && opencode   (restart once), then /flywheel-new")
     return 0
 
 

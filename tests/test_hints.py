@@ -10,7 +10,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 TEMPLATE = REPO / "problems" / "_template" / "problem.yaml"
 SCAFFOLD_TEMPLATE = REPO / "problems" / "_template" / "problem.scaffold.yaml"
-ARCHITECT = REPO / ".opencode" / "agent" / "problem-architect.md"
+ARCHITECT = REPO / ".opencode" / "skills" / "problem-architect" / "SKILL.md"
 EXECUTOR = REPO / ".opencode" / "agent" / "sandbox-executor.md"
 PLANNER = REPO / ".opencode" / "agent" / "planner.md"
 REVIEWER = REPO / ".opencode" / "agent" / "sandbox-reviewer.md"

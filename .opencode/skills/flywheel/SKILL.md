@@ -1,42 +1,25 @@
 ---
 name: flywheel
-description: Use ONLY when running the data-flywheel loop — the executor/reviewer/researcher/planner/relentless-executor cycle driven by problem.yaml gates. Triggered by /flywheel-new or /flywheel-run.
+description: Flywheel index — points to the architect/orchestrate skills and the plan/build/ask/orchestrate agents. Triggered by /flywheel-new or /flywheel-run.
 ---
 
-# Flywheel skill
+# Flywheel skill (index)
 
-A problem-agnostic harness for iteratively building ML systems, predictors, or software features. The flywheel builds models, scores them against declarative gates, brings in outside perspective when stuck, plans, then relentlessly executes.
+A problem-agnostic harness for iteratively building ML systems, predictors, or software features.
 
 ## Modes
 
-| Mode | Agent (all `primary`) | Question tool |
-|------|------------------------|---------------|
-| `autonomous` | `flywheel-orchestrator` | never — log to `decisions.md` |
-| `interactive` | `flywheel-orchestrator-interactive` | on ambiguous gate fail, researcher tie, commit-split |
-| `new` | `problem-architect` | always — Socratic YAML builder |
-| `ask` | `ask` | always welcome, never required — read-only observer (`/ask`) |
+| Mode | Agent (all `primary`) | Skill | Question tool |
+|------|------------------------|-------|---------------|
+| `autonomous` | `orchestrate` | `orchestrate-autonomous` | never — log to `decisions.md` |
+| `interactive` | `orchestrate-interactive` | `orchestrate-interactive` (+ `orchestrate-autonomous`) | on ambiguous gate fail, researcher tie, commit-split |
+| `new` | `build` | `problem-architect` | always — Socratic YAML builder (or defaults+log in autonomous) |
+| `ask` | `ask` | — (read-only observer, `/ask`) | always welcome, never required |
+| `plan` | `plan` | — (planning, no execution) | as needed for scoping |
 
-Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat. `ask` sits outside the loop: it answers questions from the repo map, git history, and run provenance without mutating anything.
+Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat. `ask` sits outside the loop. `plan` scopes work before `build`/`orchestrate` execute.
 
-## Loop
-
-1. **Sandbox loop** (`sandbox-executor` + `sandbox-reviewer`, gate-driven, up to 3 nudges or until pass). Executor copies data (global cache), trains one variant, writes `metrics.json`. Parallel light variants only; heavy variants run serially, one job → one log. Reviewer scores vs `gates:` in `problem.yaml` and returns structured learnings. The orchestrator appends them to run-scoped `learnings.md`, consolidates Confirmed/Contradicted/Open + baseline diagnosis every 3 iterations or on plateau, and injects them into each next executor prompt. `problem.yaml` goals/gates are immutable — learnings nudge future steps only.
-2. **Research** (`researcher`) — only on plateau. Mines `references` / docs / papers for new metric/backbone ideas. Reads all `logs/` + `learnings.md`; leads with why the good baseline still wins. Proposes candidates, never mutates `problem.yaml`.
-3. **Plan** (`planner`) — merges logs + `learnings.md` + research into `runs/<p>/<ts>/plan.md` with Learnings / Baseline diagnosis / Do-not-retry, chosen variant(s), verbatim thresholds, commit split.
-4. **Flywheel** (`flywheel-executor`) — consumes `plan.md`, fires `nohup` BG jobs (one job → one log, never two peak-RAM at once), polls via `while pgrep -f <job> >/dev/null; do sleep 10; done`, picks winners by gate margin, mints artifacts, generates tests/notebooks via builder scripts, runs `pytest/ruff/nbconvert` under `timeout`.
-
-All installs in `{constraints.venv}`. Global caches reused. Resources measured at setup (`/flywheel-new`), confirmed once at run start; limits live in `problem.yaml: constraints`.
-
-## Observability
-
-Provenance is mandatory, phase + gate-delta granularity only. The orchestrator
-is the sole writer via `shared/observe.py` (see `shared/event-schema.md`):
-`init` once per run, then `append` one event per phase transition / reviewer
-score / nudge / abort. `observe.py` dual-writes `runs/<p>/<ts>/events.jsonl`
-(machine-readable) + `decisions.md` (human render) + `flywheel-state.json`.
-Subagents return `gates` maps; the orchestrator logs. Query with
-`shared/observe.py query <run-dir> [--phase ..] [--failed-only] [--gate ..]`
-or plain `jq` over `events.jsonl`.
+Subagents (dispatched by `orchestrate` via `task`, unchanged): `sandbox-executor`, `sandbox-reviewer`, `researcher`, `planner`, `flywheel-executor`. See each agent file plus `shared/gate-contract.md` for gate syntax and `shared/event-schema.md` for provenance.
 
 ## Problem file
 

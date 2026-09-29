@@ -12,14 +12,17 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 AGENT = REPO / ".opencode" / "agent"
+SKILLS = REPO / ".opencode" / "skills"
 REVIEWER = AGENT / "sandbox-reviewer.md"
 RESEARCHER = AGENT / "researcher.md"
 PLANNER = AGENT / "planner.md"
-ORCH = AGENT / "flywheel-orchestrator.md"
-ORCH_INT = AGENT / "flywheel-orchestrator-interactive.md"
+ORCH = AGENT / "orchestrate.md"
+ORCH_INT = AGENT / "orchestrate-interactive.md"
 SANDBOX = AGENT / "sandbox-executor.md"
 FLYWHEEL = AGENT / "flywheel-executor.md"
-SKILL = REPO / ".opencode" / "skills" / "flywheel" / "SKILL.md"
+SKILL = SKILLS / "flywheel" / "SKILL.md"
+SKILL_AUTO = SKILLS / "orchestrate-autonomous" / "SKILL.md"
+SKILL_INT = SKILLS / "orchestrate-interactive" / "SKILL.md"
 CONTRACT = REPO / "shared" / "gate-contract.md"
 SCHEMA = REPO / "shared" / "event-schema.md"
 COMMAND = REPO / ".opencode" / "command" / "flywheel-run.md"
@@ -80,9 +83,13 @@ def test_executors_honor_learnings():
 
 def test_skill_contract_and_command():
     skill = SKILL.read_text(encoding="utf-8")
-    assert "learnings.md" in skill
-    assert "immutable" in skill
-    assert "why the good baseline still wins" in skill
+    auto = SKILL_AUTO.read_text(encoding="utf-8")
+    inter = SKILL_INT.read_text(encoding="utf-8")
+    combined = skill + "\n" + auto + "\n" + inter
+    assert "learnings.md" in combined
+    assert "immutable" in combined
+    assert "why the good baseline still wins" in auto
+    assert "`ask`" in skill
     command = COMMAND.read_text(encoding="utf-8")
     assert "learnings.md" in command
     assert "immutable" in command
