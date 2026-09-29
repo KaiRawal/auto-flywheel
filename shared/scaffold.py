@@ -70,6 +70,13 @@ STALE_FILES = [
     ".opencode/agent/problem-architect.md",
 ]
 
+# Flywheel-lite ships exactly these two files (verbatim, no rewrites) and
+# nothing else: no skills, no shared docs, no problem.yaml, no
+# AGENTS.md/.gitignore changes.
+LITE_AGENT_FILES = ["ask.md"]
+
+LITE_COMMAND_FILES = ["ask.md"]
+
 # Ordered (pattern, replacement). Specific rules first, generic path
 # remaps after. Applied to copied prompt/config markdown only.
 REWRITE_RULES: list[tuple[str, str]] = [
@@ -367,6 +374,94 @@ def update(
     return counts
 
 
+def lite_install_file(src: Path, dst: Path, collisions: list[str]) -> str:
+    """Verbatim copy helper for lite (no REWRITE_RULES). Returns wrote|same|collision."""
+    content = src.read_text(encoding="utf-8")
+    if dst.exists():
+        if dst.read_text(encoding="utf-8") == content:
+            return "same"
+        collisions.append(str(dst))
+        return "collision"
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    dst.write_text(content, encoding="utf-8")
+    return "wrote"
+
+
+def lite_scaffold(target: Path) -> dict:
+    """Install the lite harness (ask agent + ask command only)."""
+    collisions: list[str] = []
+    counts = {"wrote": 0, "same": 0}
+
+    def put(src: Path, dst: Path) -> None:
+        outcome = lite_install_file(src, dst, collisions)
+        if outcome != "collision":
+            counts[outcome] += 1
+
+    for name in LITE_AGENT_FILES:
+        put(SOURCE_ROOT / ".opencode" / "agent" / name, target / ".opencode" / "agent" / name)
+    for name in LITE_COMMAND_FILES:
+        put(
+            SOURCE_ROOT / ".opencode" / "command" / name,
+            target / ".opencode" / "command" / name,
+        )
+    if collisions:
+        raise SystemExit(
+            "Refusing to overwrite files with different content:\n"
+            + "\n".join(f"  - {c}" for c in collisions)
+            + "\nDelete, move, or reconcile them, then re-run."
+        )
+    return counts
+
+
+def lite_update(
+    target: Path,
+    dry_run: bool = False,
+    allow_dirty: bool = False,
+) -> dict:
+    """Refresh the lite harness. Raises SystemExit on error."""
+    if not target.is_dir():
+        raise SystemExit(f"error: target is not a directory: {target}")
+    clean = is_git_clean(target)
+    if clean is False and not allow_dirty:
+        raise SystemExit(
+            f"error: {target} has uncommitted changes — commit or stash, "
+            "or re-run with --allow-dirty."
+        )
+    if dry_run:
+        collisions: list[str] = []
+        counts: dict = {"wrote": 0, "same": 0}
+        for name in LITE_AGENT_FILES:
+            src = SOURCE_ROOT / ".opencode" / "agent" / name
+            dst = target / ".opencode" / "agent" / name
+            content = src.read_text(encoding="utf-8")
+            if dst.exists():
+                if dst.read_text(encoding="utf-8") == content:
+                    counts["same"] += 1
+                else:
+                    collisions.append(str(dst))
+            else:
+                counts["wrote"] += 1
+        for name in LITE_COMMAND_FILES:
+            src = SOURCE_ROOT / ".opencode" / "command" / name
+            dst = target / ".opencode" / "command" / name
+            content = src.read_text(encoding="utf-8")
+            if dst.exists():
+                if dst.read_text(encoding="utf-8") == content:
+                    counts["same"] += 1
+                else:
+                    collisions.append(str(dst))
+            else:
+                counts["wrote"] += 1
+        if collisions:
+            raise SystemExit(
+                "Refusing to overwrite files with different content:\n"
+                + "\n".join(f"  - {c}" for c in collisions)
+                + "\nDelete, move, or reconcile them, then re-run."
+            )
+        return counts
+    return lite_scaffold(target)
+
+
 def self_check(target: Path) -> list[str]:
     warnings: list[str] = []
     if shutil.which("python3") is None:
@@ -475,6 +570,57 @@ def update_main(argv: list[str] | None = None) -> int:
         for warning in self_check(target):
             print(f"warning: {warning}")
         print(f"next: cd {target} && opencode   (restart once), then /flywheel-new")
+    return 0
+
+
+def lite_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Install the lite harness (ask agent + ask command only)."
+    )
+    parser.add_argument("target", help="existing repo directory to scaffold into")
+    args = parser.parse_args(argv)
+
+    target = Path(args.target).resolve()
+    if not target.is_dir():
+        print(f"error: target is not a directory: {target}", file=sys.stderr)
+        return 2
+    try:
+        counts = lite_scaffold(target)
+    except SystemExit as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    print(f"scaffolded lite ask into {target} ({counts['wrote']} wrote, {counts['same']} kept)")
+    print("  .opencode/agent/ask.md, .opencode/command/ask.md")
+    print(f"next: cd {target} && opencode   (restart once), then /ask")
+    return 0
+
+
+def lite_update_main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Refresh the lite harness (ask agent + ask command only)."
+    )
+    parser.add_argument("target", help="existing repo directory to update")
+    parser.add_argument("--dry-run", action="store_true", help="preview without changing anything")
+    parser.add_argument(
+        "--allow-dirty", action="store_true", help="run even with uncommitted changes"
+    )
+    args = parser.parse_args(argv)
+
+    target = Path(args.target).resolve()
+    try:
+        counts = lite_update(target, dry_run=args.dry_run, allow_dirty=args.allow_dirty)
+    except SystemExit as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.dry_run:
+        print(f"would update lite ask in {target} "
+              f"({counts['wrote']} write, {counts['same']} keep)")
+    else:
+        print(f"updated lite ask in {target} "
+              f"({counts['wrote']} wrote, {counts['same']} kept)")
+        print(f"next: cd {target} && opencode   (restart once), then /ask")
     return 0
 
 

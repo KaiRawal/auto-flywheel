@@ -7,6 +7,6 @@
 | `new` | `/flywheel-new` | `build` + `problem-architect` | always (or defaults+log in autonomous) |
 | `plan` | Tab-cycle to `plan` | `plan` | as needed for scoping |
 | `build` | Tab-cycle to `build` | `build` | as needed for execution |
-| `ask` | `/ask [question]` or Tab-cycle to `ask` | `ask` | always welcome, never required — read-only, outside the loop |
+| `ask` | `/ask [question]` or Tab-cycle to `ask` | `ask` (+ optional `flywheel-status` skill for runs) | always welcome, never required — read-only, outside the loop |
 
-Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run, hours) → repeat. `ask` observes any phase without mutating: repo map, git history, run provenance (`events.jsonl`/`decisions.md`), artifacts. `plan` scopes before `build`/`orchestrate` execute.
+Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run, hours) → repeat. `ask` answers from repo map + git history, and (with the `flywheel-status` skill, full install only) run provenance. `plan` scopes before `build`/`orchestrate` execute.

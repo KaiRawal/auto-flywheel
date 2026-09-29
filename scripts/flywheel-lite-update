@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+"""Refresh the lite harness (ask agent + ask command only).
+
+Usage: scripts/flywheel-lite-update <target-dir> [--dry-run] [--allow-dirty]
+"""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared"))
+
+from scaffold import lite_update_main
+
+if __name__ == "__main__":
+    raise SystemExit(lite_update_main())

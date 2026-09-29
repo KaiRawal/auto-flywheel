@@ -14,7 +14,7 @@ A problem-agnostic harness for iteratively building ML systems, predictors, or s
 | `autonomous` | `orchestrate` | `orchestrate-autonomous` | never — log to `decisions.md` |
 | `interactive` | `orchestrate-interactive` | `orchestrate-interactive` (+ `orchestrate-autonomous`) | on ambiguous gate fail, researcher tie, commit-split |
 | `new` | `build` | `problem-architect` | always — Socratic YAML builder (or defaults+log in autonomous) |
-| `ask` | `ask` | — (read-only observer, `/ask`) | always welcome, never required |
+| `ask` | `ask` | — (read-only observer, `/ask`; loads `flywheel-status` for runs) | always welcome, never required |
 | `plan` | `plan` | — (planning, no execution) | as needed for scoping |
 
 Lifecycle: `new` (setup interview, once) → `autonomous`/`interactive` (long run) → repeat. `ask` sits outside the loop. `plan` scopes work before `build`/`orchestrate` execute.

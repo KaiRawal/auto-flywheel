@@ -131,6 +131,7 @@ What you get in your repo (all paths below are relative to it):
 .opencode/command/flywheel-*.md, ask.md   # /flywheel-run, /flywheel-new, /flywheel-status, ..., /ask
 .opencode/skills/flywheel/        # index skill (points to problem-architect, orchestrate-autonomous/interactive)
 .opencode/skills/problem-architect/ orchestrate-autonomous/ orchestrate-interactive/
+.opencode/skills/flywheel-status/ # run-provenance skill loaded by ask (full install only)
 .flywheel/problem.yaml            # your spec (starter template, TODOs inside)
 .flywheel/shared/                 # observe.py logger + gate/observability contracts
 ```
@@ -150,6 +151,17 @@ cd /path/to/myrepo && opencode   # restart once so agents/commands register
 ```
 
 Runs land in `.flywheel/runs/<ts>/` (gitignored); the winner is delivered on a `flywheel/<problem>-<ts>` branch in your repo for review. Everything under "Writing gates", "Problem types" and "Observability" below applies with `problems/<name>` → `.flywheel` and `shared/` → `.flywheel/shared/`.
+
+### Flywheel-lite (ask only)
+
+To add just the read-only `/ask` agent to an opencode repo (no harness, no skills, no `.flywheel/`):
+
+```bash
+./auto-flywheel/scripts/flywheel-lite-init /path/to/myrepo
+cd /path/to/myrepo && opencode   # restart once so the agent/command register
+```
+
+Ships exactly `.opencode/agent/ask.md` + `.opencode/command/ask.md` (verbatim, ask is flywheel-free). Refresh with `flywheel-lite-update` (`--dry-run` previews, refuses on dirty trees unless `--allow-dirty`).
 
 ## Observability: what was done and why
 
