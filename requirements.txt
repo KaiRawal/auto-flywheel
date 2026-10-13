@@ -1,0 +1,8 @@
+# Pinned demo dependencies (measured from .venv on 2026-10-13, Python 3.13.5).
+# Install with: .venv/bin/pip install -r requirements.txt
+pytest==9.1.1
+scikit-learn==1.9.1
+joblib==1.6.0
+ruff==0.16.7
+# Notebooks only (not in .venv by default; install if you use examples/demo.ipynb):
+jupyter

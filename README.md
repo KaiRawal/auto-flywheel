@@ -36,7 +36,7 @@ Three phases, one codebase: **setup** (`/flywheel-new` interview, once) → **au
 git clone https://github.com/KaiRawal/auto-flywheel.git
 cd auto-flywheel
 python -m venv .venv
-.venv/bin/pip install pytest scikit-learn joblib ruff jupyter
+.venv/bin/pip install -r requirements.txt
 ```
 
 Then launch opencode from the repo root:
@@ -65,11 +65,28 @@ cat runs/toy-tabular/*/decisions.md
 .venv/bin/python shared/observe.py query runs/toy-tabular/* --failed-only
 ```
 
+Expected (values vary slightly by machine/sklearn version):
+
+```
+train f1=0.9560 test f1=0.9561
+loaded artifacts/model.joblib: test accuracy 0.9561
+```
+
+Sample details: `problems/toy-tabular/README.md`, `problems/feature-flags/README.md`.
+
 Interactive variant (asks you at ambiguous gate failures, researcher ties, commit splits):
 
 ```
 /flywheel-run problems/toy-tabular --interactive
 ```
+
+### Troubleshooting
+
+- **Commands not found after first launch:** quit and restart opencode once so agents/commands register.
+- **Permission prompts on every file:** `opencode.json` pre-allows `~/Oxford/Projects/auto-flywheel/**`; if you cloned elsewhere, update that path.
+- **`timeout: command not found` (macOS):** macOS has no GNU `timeout` by default. `brew install coreutils`, then use `gtimeout` or add `$(brew --prefix coreutils)/libexec/gnubin` to `PATH`.
+- **Always use the repo venv:** `.venv/bin/python`, `.venv/bin/pip install -r requirements.txt` — never system `pip`, `brew`, `apt`, or `npm`.
+- **Notebooks:** `jupyter` is listed in `requirements.txt` for `examples/demo.ipynb` only; skip it if you don't use notebooks.
 
 ## Your first problem
 
