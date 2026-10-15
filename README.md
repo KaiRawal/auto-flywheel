@@ -1,5 +1,7 @@
 # auto-flywheel
 
+**Human readers beware, this README is written primarily for agents.**
+
 A problem-agnostic **autonomous delivery harness for [opencode](https://opencode.ai)** — a relentless loop that turns an underspecified `problem.yaml` into verified artifacts, tests and notebooks, with a queryable audit trail of everything it did and why.
 
 > **Overkill by design.** The included `toy-tabular` problem (breast-cancer prediction) is intentionally trivial — it proves the autonomous loop works end-to-end in <1 minute with no downloads.
